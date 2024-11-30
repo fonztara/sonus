@@ -7,15 +7,27 @@
 
 import SwiftUI
 
+enum ViewName: String, CaseIterable {
+    case loadFile, playAudio
+}
+
 struct ContentView: View {
+    @State var selectedView: ViewName = .playAudio
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
+        NavigationSplitView {
+            VStack {
+                ForEach(ViewName.allCases, id: \.self) { viewName in
+                    Button(viewName.rawValue) {
+                        selectedView = viewName
+                    }
+                }
+            }
+        } detail: {
+            switch selectedView {
+            case .loadFile: LoadFileView()
+            case .playAudio: PlayAudioView()
+            }
         }
-        .padding()
     }
 }
 
