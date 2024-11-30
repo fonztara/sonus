@@ -11,7 +11,7 @@ import SwiftUI
 struct sonusApp: App {
     var body: some Scene {
         WindowGroup {
-            GlobalOverlayView()
+            ContentView()
         }
     }
 }
