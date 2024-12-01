@@ -10,13 +10,10 @@ import UniformTypeIdentifiers
 
 struct LoadFileButton: View {
     @EnvironmentObject var fileService: FileService
-    @EnvironmentObject var audioService: AudioService
     
     @State var file: URL? = nil
     @State var importFile: Bool = false
     @Binding var isImporting: Bool
-    
-    var allFileNames: [String] { fileService.fileNames.keys.sorted() }
     
     var body: some View {
         Button {

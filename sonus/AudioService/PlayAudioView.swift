@@ -20,6 +20,7 @@ struct PlayAudioView: View {
     @State var isDeleting: Bool = false
     @State var nameToEdit: String = ""
     @State var nameEditing: String = ""
+    @State var nameToDelete: String = ""
     
     @State var selectedIndex: Int = 0
     @State private var scrollProxy: ScrollViewProxy? = nil
@@ -80,18 +81,20 @@ struct PlayAudioView: View {
                                     
                                     Button {
                                         isDeleting = true
+                                        nameToDelete = name
                                     } label: {
                                         Image(systemName: "trash.fill")
                                     }
                                     .foregroundStyle(.red)
                                     .buttonStyle(.plain)
                                 }
-                                .alert("Are you sure?", isPresented: $isDeleting, actions: {
+                                .alert("Delete \(nameToDelete)?", isPresented: $isDeleting, actions: {
                                     Button("Delete", role: .destructive) {
-                                        fileService.deleteFile(name)
+                                        fileService.deleteFile(nameToDelete)
                                         isDeleting = false
                                     }
                                     Button("Cancel", role: .cancel) {
+                                        nameToDelete = ""
                                         isDeleting = false
                                     }
                                 }, message: {
@@ -142,7 +145,12 @@ struct PlayAudioView: View {
                 
                 HStack {
                     Image(systemName: "heart.fill")
+                    
                     Spacer()
+                    
+                    RecordAudioButton()
+                        .frame(width: 30, height: 30)
+                    
                     LoadFileButton(isImporting: $isImporting)
                         .frame(width: 30, height: 30)
                 }
