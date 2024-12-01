@@ -16,25 +16,27 @@ class FileService: ObservableObject {
         readFileNames()
     }
     
-    func saveFile(from url: URL) {
-        let fileName = url.lastPathComponent
-        let filePath = self.folderPath.appendingPathComponent(fileName)
-        if url.startAccessingSecurityScopedResource() {
-            do {
-                try Data(contentsOf: url).write(to: filePath)
-                self.readFileNames()
-            } catch {
-                print("Error saving file: \(error)")
+    func saveFiles(from urls: [URL]) {
+        for url in urls {
+            let fileName = url.lastPathComponent
+            let filePath = self.folderPath.appendingPathComponent(fileName)
+            if url.startAccessingSecurityScopedResource() {
+                do {
+                    try Data(contentsOf: url).write(to: filePath)
+                    self.readFileNames()
+                } catch {
+                    print("Error saving file: \(error)")
+                }
+                url.stopAccessingSecurityScopedResource()
+            } else {
+                do {
+                    try Data(contentsOf: url).write(to: filePath)
+                    self.readFileNames()
+                } catch {
+                    print("Error saving file: \(error)")
+                }
+                print("Permission failed")
             }
-            url.stopAccessingSecurityScopedResource()
-        } else {
-            do {
-                try Data(contentsOf: url).write(to: filePath)
-                self.readFileNames()
-            } catch {
-                print("Error saving file: \(error)")
-            }
-            print("Permission failed")
         }
     }
     

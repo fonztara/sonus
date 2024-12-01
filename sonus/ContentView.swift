@@ -13,20 +13,12 @@ enum ViewName: String, CaseIterable {
 
 struct ContentView: View {
     @State var selectedView: ViewName = .playAudio
+    @State var isImporting: Bool = false
+    
     var body: some View {
-        NavigationSplitView {
-            VStack {
-                ForEach(ViewName.allCases, id: \.self) { viewName in
-                    Button(viewName.rawValue) {
-                        selectedView = viewName
-                    }
-                }
-            }
-        } detail: {
-            switch selectedView {
-            case .loadFile: LoadFileView()
-            case .playAudio: PlayAudioView()
-            }
+        switch selectedView {
+        case .loadFile: LoadFileButton(isImporting: $isImporting)
+        case .playAudio: PlayAudioView(isImporting: $isImporting)
         }
     }
 }

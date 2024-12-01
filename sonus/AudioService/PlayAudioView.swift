@@ -6,10 +6,12 @@
 //
 
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct PlayAudioView: View {
     @EnvironmentObject var audioService: AudioService
     @EnvironmentObject var fileService: FileService
+    @Binding var isImporting: Bool
     
     @FocusState var focus: Bool
     @State var showDropdown: Bool = true
@@ -27,13 +29,23 @@ struct PlayAudioView: View {
     
     var body: some View {
         VStack {
-            TextField("Enter text", text: $text)
-                .padding(.top, 150)
-                .focused($focus)
-                .textFieldStyle(.roundedBorder)
-                .onChange(of: text) { oldValue, newValue in
-                    selectedIndex = 0
-                }
+            HStack {
+                TextField("Enter text", text: $text)
+                    .focused($focus)
+                    .font(.largeTitle)
+                    .textFieldStyle(.plain)
+                    .onChange(of: text) { oldValue, newValue in
+                        selectedIndex = 0
+                        fileService.readFileNames()
+                    }
+                    .padding()
+                    .background {
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(Color.primary.opacity(0.2))
+                    }
+            }
+            .frame(height: 65)
+            
             
             if showDropdown && !filteredFileNames.isEmpty {
                 ScrollView {
@@ -42,6 +54,7 @@ struct PlayAudioView: View {
                             ForEach(filteredFileNames, id: \.self) { name in
                                 Text(name)
                                     .padding(8)
+                                    .font(.largeTitle)
                                     .frame(maxWidth: .infinity, alignment: .leading)
                                     .foregroundStyle(selectedIndex < filteredFileNames.count ? name == filteredFileNames[selectedIndex] ? Color.accentColor : .primary : .primary)
                                     .background(content: {
@@ -66,6 +79,7 @@ struct PlayAudioView: View {
                 .background(Color.gray.opacity(0.2))
                 .cornerRadius(8)
                 .shadow(color: Color.black.opacity(0.2), radius: 5, x: 0, y: 2)
+                .scrollIndicators(.never)
                 .onChange(of: selectedIndex) { old, new in
                     withAnimation {
                         scrollProxy?.scrollTo(filteredFileNames[new], anchor: .bottom)
@@ -74,6 +88,7 @@ struct PlayAudioView: View {
             }
             
             Button {
+                fileService.readFileNames()
                 if filteredFileNames.isEmpty { return }
                 audioService.playAudio(from: fileService.fileNames["\(filteredFileNames[selectedIndex])"]!)
             } label: {
@@ -112,15 +127,42 @@ struct PlayAudioView: View {
             
             Spacer()
         }
-        .frame(width: 400)
+        .toolbar(content: {
+            ToolbarItem {
+                LoadFileButton(isImporting: $isImporting)
+            }
+        })
+        .padding(.top, 100)
+        .padding(.horizontal, 100)
         .frame(maxHeight: .infinity)
         .onAppear {
             focus = true
             fileService.readFileNames()
         }
+        .onDrop(of: [.audio], isTargeted: $isImporting, perform: { providers in
+            for provider in providers {
+                
+                if provider.hasItemConformingToTypeIdentifier(UTType.audio.identifier) {
+                    provider.loadItem(forTypeIdentifier: UTType.audio.identifier, completionHandler: { data, error in
+                        if let error {
+                            print("error loading item")
+                            print(error)
+                            return
+                        }
+                        if let fileURL = data as? URL {
+                            let _ = fileURL.startAccessingSecurityScopedResource()
+                            fileService.saveFiles(from: [fileURL])
+                            fileURL.stopAccessingSecurityScopedResource()
+                            return
+                        }
+                    })
+                }
+            }
+            return true
+        })
     }
 }
 
 #Preview {
-    PlayAudioView()
+    PlayAudioView(isImporting: .constant(true))
 }
