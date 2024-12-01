@@ -7,19 +7,18 @@
 
 import SwiftUI
 
-enum ViewName: String, CaseIterable {
-    case loadFile, playAudio
-}
-
 struct ContentView: View {
-    @State var selectedView: ViewName = .playAudio
     @State var isImporting: Bool = false
     
     var body: some View {
-        switch selectedView {
-        case .loadFile: LoadFileButton(isImporting: $isImporting)
-        case .playAudio: PlayAudioView(isImporting: $isImporting)
-        }
+        PlayAudioView(isImporting: $isImporting)
+            .background {
+                ZStack {
+                    Image("bg")
+                    Rectangle()
+                        .fill(.ultraThinMaterial)
+                }
+            }
     }
 }
 

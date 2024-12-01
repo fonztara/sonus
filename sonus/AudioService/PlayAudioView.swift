@@ -29,7 +29,7 @@ struct PlayAudioView: View {
     
     var body: some View {
         VStack {
-            HStack {
+            VStack(spacing: 0) {
                 TextField("Enter text", text: $text)
                     .focused($focus)
                     .font(.largeTitle)
@@ -39,22 +39,17 @@ struct PlayAudioView: View {
                         fileService.readFileNames()
                     }
                     .padding()
-                    .background {
-                        RoundedRectangle(cornerRadius: 16)
-                            .fill(Color.primary.opacity(0.2))
-                    }
-            }
-            .frame(height: 65)
-            
-            
-            if showDropdown && !filteredFileNames.isEmpty {
+                
+                Divider()
+                
+                
                 ScrollView {
                     ScrollViewReader { proxy in
                         VStack(spacing: 0) {
                             ForEach(filteredFileNames, id: \.self) { name in
                                 Text(name)
-                                    .padding(8)
-                                    .font(.largeTitle)
+                                    .padding()
+                                    .font(.title3)
                                     .frame(maxWidth: .infinity, alignment: .leading)
                                     .foregroundStyle(selectedIndex < filteredFileNames.count ? name == filteredFileNames[selectedIndex] ? Color.accentColor : .primary : .primary)
                                     .background(content: {
@@ -75,9 +70,9 @@ struct PlayAudioView: View {
                         }
                     }
                 }
-                .frame(maxHeight: 100)
-                .background(Color.gray.opacity(0.2))
-                .cornerRadius(8)
+                .containerRelativeFrame([.vertical], { size, _ in
+                    size / 2
+                })
                 .shadow(color: Color.black.opacity(0.2), radius: 5, x: 0, y: 2)
                 .scrollIndicators(.never)
                 .onChange(of: selectedIndex) { old, new in
@@ -85,7 +80,29 @@ struct PlayAudioView: View {
                         scrollProxy?.scrollTo(filteredFileNames[new], anchor: .bottom)
                     }
                 }
+                
+                Divider()
+                
+                HStack {
+                    Image(systemName: "heart.fill")
+                    Spacer()
+                    LoadFileButton(isImporting: $isImporting)
+                        .frame(width: 30, height: 30)
+                }
+                .padding(.horizontal)
+                .padding(.vertical, 8)
+                
+                Divider()
             }
+            .frame(minWidth: 700)
+            .clipShape(RoundedRectangle(cornerRadius: 16))
+            .background {
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(.ultraThickMaterial)
+            }
+            
+            
+            
             
             Button {
                 fileService.readFileNames()
@@ -126,6 +143,7 @@ struct PlayAudioView: View {
             .hidden()
             
             Spacer()
+            
         }
         .toolbar(content: {
             ToolbarItem {
