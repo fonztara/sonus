@@ -14,35 +14,45 @@ class FileService: ObservableObject {
     
     init() {
         readFileNames()
-        print(fileNames)
     }
     
     func saveFile(from url: URL) {
         let fileName = url.lastPathComponent
         let filePath = self.folderPath.appendingPathComponent(fileName)
-        
         if url.startAccessingSecurityScopedResource() {
             do {
                 try Data(contentsOf: url).write(to: filePath)
-                fileNames[fileName.split(separator: ".").first!.lowercased()] = filePath
-                print(fileNames)
+                self.readFileNames()
             } catch {
                 print("Error saving file: \(error)")
             }
             url.stopAccessingSecurityScopedResource()
         } else {
+            do {
+                try Data(contentsOf: url).write(to: filePath)
+                self.readFileNames()
+            } catch {
+                print("Error saving file: \(error)")
+            }
             print("Permission failed")
         }
     }
     
-    private func readFileNames() {
+    func readFileNames() {
+        DispatchQueue.main.async {
+            self.fileNames.removeAll()
+        }
         do {
             let Path = folderPath.absoluteURL
             let directoryContents = try FileManager.default.contentsOfDirectory(at: Path, includingPropertiesForKeys: nil, options: [])
             for url in directoryContents {
                 let fileName = url.lastPathComponent
-                if fileName.hasSuffix(".mp3") || fileName.hasSuffix(".wav") {
-                    fileNames[fileName.split(separator: ".").first!.lowercased()] = url
+                if fileName.contains(".") && fileName.first != "." {
+                    if let nameOnly = fileName.split(separator: ".").first {
+                        DispatchQueue.main.async {
+                            self.fileNames[nameOnly.lowercased()] = url
+                        }
+                    }
                 }
             }
         }

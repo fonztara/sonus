@@ -14,7 +14,6 @@ class AudioService: ObservableObject {
     func playAudio(from url: URL) {
         do {
             if FileManager.default.fileExists(atPath: url.path) {
-                print("File exists: \(url.path)")
             } else {
                 print("File does not exist: \(url.path)")
                 return
@@ -24,7 +23,6 @@ class AudioService: ObservableObject {
             player?.prepareToPlay()
             player?.volume = 1.0
             player?.play()
-            print("Audio started playing")
         } catch {
             print("Error playing audio: \(error.localizedDescription)")
         }

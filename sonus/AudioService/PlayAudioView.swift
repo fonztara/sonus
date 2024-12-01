@@ -15,6 +15,7 @@ struct PlayAudioView: View {
     @State var showDropdown: Bool = true
     
     @State var selectedIndex: Int = 0
+    @State private var scrollProxy: ScrollViewProxy? = nil
     
     var allFileNames: [String] { fileService.fileNames.keys.sorted() }
     var filteredFileNames: [String] {
@@ -30,16 +31,34 @@ struct PlayAudioView: View {
                 .padding(.top, 150)
                 .focused($focus)
                 .textFieldStyle(.roundedBorder)
+                .onChange(of: text) { oldValue, newValue in
+                    selectedIndex = 0
+                }
             
             if showDropdown && !filteredFileNames.isEmpty {
                 ScrollView {
-                    VStack(spacing: 0) {
-                        ForEach(filteredFileNames, id: \.self) { name in
-                            Text(name)
-                                .padding(8)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .foregroundStyle(name == filteredFileNames[selectedIndex] ? .blue : .primary)
-                            Divider()
+                    ScrollViewReader { proxy in
+                        VStack(spacing: 0) {
+                            ForEach(filteredFileNames, id: \.self) { name in
+                                Text(name)
+                                    .padding(8)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .foregroundStyle(selectedIndex < filteredFileNames.count ? name == filteredFileNames[selectedIndex] ? Color.accentColor : .primary : .primary)
+                                    .background(content: {
+                                        if selectedIndex < filteredFileNames.count {
+                                            if name == filteredFileNames[selectedIndex] {
+                                                Color.accentColor.opacity(0.2)
+                                            }
+                                        }
+                                    })
+                                    .id(name)
+                                
+                                
+                                Divider()
+                            }
+                            .onAppear {
+                                scrollProxy = proxy
+                            }
                         }
                     }
                 }
@@ -47,6 +66,11 @@ struct PlayAudioView: View {
                 .background(Color.gray.opacity(0.2))
                 .cornerRadius(8)
                 .shadow(color: Color.black.opacity(0.2), radius: 5, x: 0, y: 2)
+                .onChange(of: selectedIndex) { old, new in
+                    withAnimation {
+                        scrollProxy?.scrollTo(filteredFileNames[new], anchor: .bottom)
+                    }
+                }
             }
             
             Button {
@@ -59,28 +83,32 @@ struct PlayAudioView: View {
             .hidden()
             
             Button {
-                if selectedIndex - 1 < 0 {
-                    selectedIndex = filteredFileNames.count - 1
-                } else {
-                    selectedIndex -= 1
+                withAnimation(.smooth(duration: 0.1)) {
+                    if selectedIndex - 1 < 0 {
+                        selectedIndex = filteredFileNames.count - 1
+                    } else {
+                        selectedIndex -= 1
+                    }
                 }
             } label: {
                 Image(systemName: "arrow.up")
             }
-            .keyboardShortcut(.upArrow)
-            //            .hidden()
+            .keyboardShortcut(.upArrow, modifiers: .capsLock)
+            .hidden()
             
             Button {
-                if selectedIndex + 1 >= filteredFileNames.count {
-                    selectedIndex = 0
-                } else {
-                    selectedIndex += 1
+                withAnimation(.smooth(duration: 0.1)) {
+                    if selectedIndex + 1 >= filteredFileNames.count {
+                        selectedIndex = 0
+                    } else {
+                        selectedIndex += 1
+                    }
                 }
             } label: {
                 Image(systemName: "arrow.down")
             }
-            .keyboardShortcut(.downArrow)
-            //            .hidden()
+            .keyboardShortcut(.downArrow, modifiers: .capsLock)
+            .hidden()
             
             Spacer()
         }
@@ -88,6 +116,7 @@ struct PlayAudioView: View {
         .frame(maxHeight: .infinity)
         .onAppear {
             focus = true
+            fileService.readFileNames()
         }
     }
 }
