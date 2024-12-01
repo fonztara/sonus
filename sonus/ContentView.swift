@@ -8,17 +8,14 @@
 import SwiftUI
 
 struct ContentView: View {
+    @StateObject var fileService: FileService = FileService()
+    @StateObject var audioService: AudioService = AudioService()
     @State var isImporting: Bool = false
     
     var body: some View {
         PlayAudioView(isImporting: $isImporting)
-            .background {
-                ZStack {
-                    Image("bg")
-                    Rectangle()
-                        .fill(.ultraThinMaterial)
-                }
-            }
+            .environmentObject(fileService)
+            .environmentObject(audioService)
     }
 }
 

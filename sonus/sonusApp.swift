@@ -9,13 +9,9 @@ import SwiftUI
 
 @main
 struct sonusApp: App {
-    @StateObject var fileService: FileService = FileService()
-    @StateObject var audioService: AudioService = AudioService()
+    @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+    
     var body: some Scene {
-        WindowGroup {
-            ContentView()
-                .environmentObject(fileService)
-                .environmentObject(audioService)
-        }
+        Settings { EmptyView() }
     }
 }

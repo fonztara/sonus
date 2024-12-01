@@ -102,11 +102,13 @@ struct PlayAudioView: View {
                                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
                                 .onHover(perform: { hover in
                                     withAnimation(.smooth(duration: 0.3)) {
-                                        selectedIndex = filteredFileNames.firstIndex(of: name)!
+                                        if let index = filteredFileNames.firstIndex(of: name) {
+                                            selectedIndex = index
+                                        }
                                     }
                                 })
                                 .background(content: {
-                                    if selectedIndex < filteredFileNames.count {
+                                    if selectedIndex >= 0 && selectedIndex < filteredFileNames.count {
                                         if name == filteredFileNames[selectedIndex] {
                                             Color.accentColor.opacity(0.2)
                                                 .clipShape(RoundedRectangle(cornerRadius: 8))
@@ -130,7 +132,9 @@ struct PlayAudioView: View {
                 .scrollIndicators(.never)
                 .onChange(of: selectedIndex) { old, new in
                     withAnimation(.smooth(duration: 0.3)) {
-                        scrollProxy?.scrollTo(filteredFileNames[new], anchor: .bottom)
+                        if new >= 0 && new < filteredFileNames.count {
+                            scrollProxy?.scrollTo(filteredFileNames[new], anchor: .bottom)
+                        }
                     }
                 }
                 
@@ -198,11 +202,6 @@ struct PlayAudioView: View {
             Spacer()
             
         }
-        .toolbar(content: {
-            ToolbarItem {
-                LoadFileButton(isImporting: $isImporting)
-            }
-        })
         .padding(.top, 100)
         .padding(.horizontal, 100)
         .frame(maxHeight: .infinity)
