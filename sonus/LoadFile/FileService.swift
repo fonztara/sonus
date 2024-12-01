@@ -62,4 +62,27 @@ class FileService: ObservableObject {
             print(error.localizedDescription)
         }
     }
+    
+    func deleteFile(_ fileName: String) {
+        do {
+            try FileManager.default.removeItem(at: fileNames[fileName]!)
+        }
+        catch {
+            print(error.localizedDescription)
+        }
+        
+        self.readFileNames()
+    }
+    
+    func changeFileName(_ fileName: String, to newName: String) {
+        let fileFormat = fileNames[fileName]!.lastPathComponent.split(separator: ".").last!
+        do {
+            try FileManager.default.moveItem(at: fileNames[fileName]!, to: folderPath.appendingPathComponent(newName + "." + fileFormat))
+        }
+        catch {
+            print(error.localizedDescription)
+        }
+        
+        self.readFileNames()
+    }
 }

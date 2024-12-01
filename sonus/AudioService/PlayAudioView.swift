@@ -13,8 +13,13 @@ struct PlayAudioView: View {
     @EnvironmentObject var fileService: FileService
     @Binding var isImporting: Bool
     
-    @FocusState var focus: Bool
+    @FocusState var textFieldFocus: Bool
+    @FocusState var nameEditFocus: Bool
     @State var showDropdown: Bool = true
+    
+    @State var isDeleting: Bool = false
+    @State var nameToEdit: String = ""
+    @State var nameEditing: String = ""
     
     @State var selectedIndex: Int = 0
     @State private var scrollProxy: ScrollViewProxy? = nil
@@ -31,7 +36,7 @@ struct PlayAudioView: View {
         VStack {
             VStack(spacing: 0) {
                 TextField("Enter text", text: $text)
-                    .focused($focus)
+                    .focused($textFieldFocus)
                     .font(.largeTitle)
                     .textFieldStyle(.plain)
                     .onChange(of: text) { oldValue, newValue in
@@ -47,22 +52,70 @@ struct PlayAudioView: View {
                     ScrollViewReader { proxy in
                         VStack(spacing: 0) {
                             ForEach(filteredFileNames, id: \.self) { name in
-                                Text(name)
-                                    .padding()
-                                    .font(.title3)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                    .foregroundStyle(selectedIndex < filteredFileNames.count ? name == filteredFileNames[selectedIndex] ? Color.accentColor : .primary : .primary)
-                                    .background(content: {
-                                        if selectedIndex < filteredFileNames.count {
-                                            if name == filteredFileNames[selectedIndex] {
-                                                Color.accentColor.opacity(0.2)
+                                HStack {
+                                    if nameToEdit == name {
+                                        TextField("Enter new name", text: $nameEditing)
+                                            .textFieldStyle(.plain)
+                                            .focused($nameEditFocus)
+                                            .onSubmit {
+                                                fileService.changeFileName(name, to: nameEditing)
+                                                nameToEdit = ""
+                                                nameEditing = ""
+                                                textFieldFocus = true
                                             }
+                                    } else {
+                                        Text(name)
+                                    }
+                                    
+                                    Spacer()
+                                    
+                                    Button {
+                                        nameToEdit = name
+                                        nameEditing = name
+                                        nameEditFocus = true
+                                    } label: {
+                                        Image(systemName: "pencil")
+                                    }
+                                    .buttonStyle(.plain)
+                                    
+                                    Button {
+                                        isDeleting = true
+                                    } label: {
+                                        Image(systemName: "trash.fill")
+                                    }
+                                    .foregroundStyle(.red)
+                                    .buttonStyle(.plain)
+                                }
+                                .alert("Are you sure?", isPresented: $isDeleting, actions: {
+                                    Button("Delete", role: .destructive) {
+                                        fileService.deleteFile(name)
+                                        isDeleting = false
+                                    }
+                                    Button("Cancel", role: .cancel) {
+                                        isDeleting = false
+                                    }
+                                }, message: {
+                                    Text("You can't undo this action")
+                                })
+                                .padding()
+                                .font(.title3)
+                                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+                                .onHover(perform: { hover in
+                                    withAnimation(.smooth(duration: 0.3)) {
+                                        selectedIndex = filteredFileNames.firstIndex(of: name)!
+                                    }
+                                })
+                                .background(content: {
+                                    if selectedIndex < filteredFileNames.count {
+                                        if name == filteredFileNames[selectedIndex] {
+                                            Color.accentColor.opacity(0.2)
+                                                .clipShape(RoundedRectangle(cornerRadius: 8))
+                                                .padding(4)
                                         }
-                                    })
-                                    .id(name)
+                                    }
+                                })
+                                .id(name)
                                 
-                                
-                                Divider()
                             }
                             .onAppear {
                                 scrollProxy = proxy
@@ -76,7 +129,7 @@ struct PlayAudioView: View {
                 .shadow(color: Color.black.opacity(0.2), radius: 5, x: 0, y: 2)
                 .scrollIndicators(.never)
                 .onChange(of: selectedIndex) { old, new in
-                    withAnimation {
+                    withAnimation(.smooth(duration: 0.3)) {
                         scrollProxy?.scrollTo(filteredFileNames[new], anchor: .bottom)
                     }
                 }
@@ -115,7 +168,7 @@ struct PlayAudioView: View {
             .hidden()
             
             Button {
-                withAnimation(.smooth(duration: 0.1)) {
+                withAnimation(.smooth(duration: 0.3)) {
                     if selectedIndex - 1 < 0 {
                         selectedIndex = filteredFileNames.count - 1
                     } else {
@@ -129,7 +182,7 @@ struct PlayAudioView: View {
             .hidden()
             
             Button {
-                withAnimation(.smooth(duration: 0.1)) {
+                withAnimation(.smooth(duration: 0.3)) {
                     if selectedIndex + 1 >= filteredFileNames.count {
                         selectedIndex = 0
                     } else {
@@ -154,7 +207,7 @@ struct PlayAudioView: View {
         .padding(.horizontal, 100)
         .frame(maxHeight: .infinity)
         .onAppear {
-            focus = true
+            textFieldFocus = true
             fileService.readFileNames()
         }
         .onDrop(of: [.audio], isTargeted: $isImporting, perform: { providers in
