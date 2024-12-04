@@ -25,13 +25,14 @@ struct PlayAudioView: View {
     @State var selectedIndex: Int = 0
     @State private var scrollProxy: ScrollViewProxy? = nil
     
+    
+    @State var text = ""
     var allFileNames: [String] { fileService.fileNames.keys.sorted() }
     var filteredFileNames: [String] {
         if text.isEmpty { return allFileNames }
-        return allFileNames.filter({$0.hasPrefix(text)})
+//        return allFileNames.filter({ $0.hasPrefix(text) })
+        return allFileNames.filter({ $0.localizedCaseInsensitiveContains(text) })
     }
-    
-    @State var text = ""
     
     var body: some View {
         VStack {
