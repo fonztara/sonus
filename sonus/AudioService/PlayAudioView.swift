@@ -102,7 +102,6 @@ struct PlayAudioView: View {
                                 })
                                 .padding()
                                 .font(.title3)
-                                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
                                 .onHover(perform: { hover in
                                     withAnimation(.smooth(duration: 0.3)) {
                                         if let index = filteredFileNames.firstIndex(of: name) {
@@ -128,15 +127,12 @@ struct PlayAudioView: View {
                         }
                     }
                 }
-                .containerRelativeFrame([.vertical], { size, _ in
-                    size / 2
-                })
                 .shadow(color: Color.black.opacity(0.2), radius: 5, x: 0, y: 2)
                 .scrollIndicators(.never)
                 .onChange(of: selectedIndex) { old, new in
                     withAnimation(.smooth(duration: 0.3)) {
                         if new >= 0 && new < filteredFileNames.count {
-                            scrollProxy?.scrollTo(filteredFileNames[new], anchor: .bottom)
+                            scrollProxy?.scrollTo(filteredFileNames[new])
                         }
                     }
                 }
@@ -159,60 +155,53 @@ struct PlayAudioView: View {
                 
                 Divider()
             }
-            .frame(minWidth: 700)
+            .frame(minWidth: 700, minHeight: 400)
             .clipShape(RoundedRectangle(cornerRadius: 16))
             .background {
                 RoundedRectangle(cornerRadius: 16)
                     .fill(.ultraThickMaterial)
             }
             
-            
-            
-            
-            Button {
-                fileService.readFileNames()
-                if filteredFileNames.isEmpty { return }
-                audioService.playAudio(from: fileService.fileNames["\(filteredFileNames[selectedIndex])"]!)
-            } label: {
-                Image(systemName: "play.circle.fill")
-            }
-            .keyboardShortcut(.defaultAction)
-            .hidden()
-            
-            Button {
-                withAnimation(.smooth(duration: 0.3)) {
-                    if selectedIndex - 1 < 0 {
-                        selectedIndex = filteredFileNames.count - 1
-                    } else {
-                        selectedIndex -= 1
-                    }
+            HStack {
+                Button {
+                    fileService.readFileNames()
+                    if filteredFileNames.isEmpty { return }
+                    audioService.playAudio(from: fileService.fileNames["\(filteredFileNames[selectedIndex])"]!)
+                } label: {
+                    Image(systemName: "play.circle.fill")
                 }
-            } label: {
-                Image(systemName: "arrow.up")
-            }
-            .keyboardShortcut(.upArrow, modifiers: .capsLock)
-            .hidden()
-            
-            Button {
-                withAnimation(.smooth(duration: 0.3)) {
-                    if selectedIndex + 1 >= filteredFileNames.count {
-                        selectedIndex = 0
-                    } else {
-                        selectedIndex += 1
+                .keyboardShortcut(.defaultAction)
+                
+                Button {
+                    withAnimation(.smooth(duration: 0.3)) {
+                        if selectedIndex - 1 < 0 {
+                            selectedIndex = filteredFileNames.count - 1
+                        } else {
+                            selectedIndex -= 1
+                        }
                     }
+                } label: {
+                    Image(systemName: "arrow.up")
                 }
-            } label: {
-                Image(systemName: "arrow.down")
+                .keyboardShortcut(.upArrow, modifiers: .capsLock)
+                
+                Button {
+                    withAnimation(.smooth(duration: 0.3)) {
+                        if selectedIndex + 1 >= filteredFileNames.count {
+                            selectedIndex = 0
+                        } else {
+                            selectedIndex += 1
+                        }
+                    }
+                } label: {
+                    Image(systemName: "arrow.down")
+                }
+                .keyboardShortcut(.downArrow, modifiers: .capsLock)
             }
-            .keyboardShortcut(.downArrow, modifiers: .capsLock)
+            .frame(width: 0, height: 0)
             .hidden()
-            
-            Spacer()
             
         }
-        .padding(.top, 100)
-        .padding(.horizontal, 100)
-        .frame(maxHeight: .infinity)
         .onAppear {
             textFieldFocus = true
             fileService.readFileNames()
