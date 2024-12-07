@@ -132,8 +132,8 @@ struct PlayAudioView: View {
                 .scrollIndicators(.never)
                 .onChange(of: selectedIndex) { old, new in
                     withAnimation(.smooth(duration: 0.3)) {
-                        if new >= 0 && new < filteredFileNames.count {
-                            scrollProxy?.scrollTo(filteredFileNames[new])
+                        if new >= 0 && new < filteredFileNames.count && new != old {
+                            scrollProxy?.scrollTo(filteredFileNames[new], anchor: .top)
                         }
                     }
                 }
