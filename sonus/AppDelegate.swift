@@ -8,6 +8,12 @@
 import SwiftUI
 import AppKit
 import Cocoa
+import KeyboardShortcuts
+
+extension KeyboardShortcuts.Name {
+    static let toggleWindow = Self("toggleWindow")
+    static let closeWindow = Self("closeWindow")
+}
 
 class CustomWindow: NSWindow {
     override var canBecomeKey: Bool {
@@ -17,13 +23,17 @@ class CustomWindow: NSWindow {
 
 class AppDelegate: NSObject, NSApplicationDelegate {
     var window: NSWindow!
-    var keyDownGlobalMonitor: Any? = nil
-    var keyDownLocalMonitor: Any? = nil
-    var mouseClickEventMonitor: Any? = nil
+    
+    override init() {
+        super.init()
+        
+        KeyboardShortcuts.setShortcut(.init(.z, modifiers: .control), for: .toggleWindow)
+        KeyboardShortcuts.setShortcut(.init(.escape), for: .closeWindow)
+    }
     
     func applicationDidFinishLaunching(_ notification: Notification) {
         setupWindow()
-        setupEventMonitors()
+        setupKeyboardShortcuts()
     }
     
     private func setupWindow() {
@@ -53,50 +63,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     
-    private func setupEventMonitors() {
-        let windowKeycodes: [UInt16] = [6] // Z
-        let windowModifierFlags: NSEvent.ModifierFlags = [.control]
-        let closeWindowKeycode: UInt16 = 53 // ESC
-        
-        keyDownGlobalMonitor = NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { [weak self] event in
-            guard let self = self else { return }
-            
-            if windowKeycodes.contains(event.keyCode) && windowModifierFlags.isSubset(of: event.modifierFlags) { // 49 is Spacebar
-                self.toggleWindow()
-            } else if event.keyCode == closeWindowKeycode {
-                if let window = self.window, window.isVisible {
-                    NSApp.hide(nil)
-                }
-            }
+    private func setupKeyboardShortcuts() {
+        KeyboardShortcuts.onKeyDown(for: .toggleWindow) { [self] in
+            self.toggleWindow()
         }
         
-        keyDownLocalMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
-            guard let self = self else { return event }
-
-            if windowKeycodes.contains(event.keyCode) && windowModifierFlags.isSubset(of: event.modifierFlags) {
-                self.toggleWindow()
-                return nil
-            } else if event.keyCode == closeWindowKeycode {
-                if let window = self.window, window.isVisible {
-                    NSApp.hide(nil)
-                }
-                return nil
-            }
-
-            return event
+        KeyboardShortcuts.onKeyDown(for: .closeWindow) { [self] in
+            self.closeWindow()
         }
-        
-        mouseClickEventMonitor = NSEvent.addGlobalMonitorForEvents(matching: .leftMouseDown) { [weak self] event in
-            guard let self = self else { return }
-            
-            let windowFrame = self.window.frame
-            let mouseLocation = NSEvent.mouseLocation
-            
-            if !windowFrame.contains(mouseLocation) {
-                self.window.close()
-            }
-        }
-        
     }
     
     private func toggleWindow() {
@@ -116,15 +90,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
     
+    private func closeWindow() {
+        if let window = self.window, window.isVisible {
+            NSApp.hide(nil)
+        }
+    }
+    
     func applicationWillTerminate(_ notification: Notification) {
-        if let keyDownGlobalMonitor = keyDownGlobalMonitor {
-            NSEvent.removeMonitor(keyDownGlobalMonitor)
-        }
-        if let keyDownLocalMonitor = keyDownLocalMonitor {
-            NSEvent.removeMonitor(keyDownLocalMonitor)
-        }
-        if let mouseClickEventMonitor = mouseClickEventMonitor {
-            NSEvent.removeMonitor(mouseClickEventMonitor)
-        }
     }
 }
