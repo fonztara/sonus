@@ -11,8 +11,6 @@
 //
 // - AUDIO IMPORT AND NAMING
 //
-// - SETTING SHORTCUT
-//
 // - FIX SCROLLING
 //
 // - PERFECT RECORDING
@@ -23,7 +21,7 @@
 //
 // - ICON
 //
-// - SETTINGS
+// - INFO
 //
 // -
 //

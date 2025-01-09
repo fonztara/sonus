@@ -10,6 +10,7 @@ import SwiftUI
 struct RecordAudioButton: View {
     @EnvironmentObject var fileService: FileService
     @EnvironmentObject var audioService: AudioService
+    @State var isHovering: Bool = false
     
     @State var isRecording: Bool = false
     
@@ -38,6 +39,10 @@ struct RecordAudioButton: View {
                     RoundedRectangle(cornerRadius: 8)
                         .foregroundStyle(Color.red.opacity(0.5))
                 }
+                if isHovering {
+                    RoundedRectangle(cornerRadius: 8)
+                        .foregroundStyle(.white.opacity(0.3))
+                }
                 Image(systemName: isRecording ? "stop.circle.fill" : "mic.fill")
                     .resizable()
                     .scaledToFit()
@@ -45,6 +50,15 @@ struct RecordAudioButton: View {
             }
         }
         .buttonStyle(.plain)
+        .onHover { hovering in
+            if hovering {
+                withAnimation(.easeIn(duration: 0.05)) {
+                    isHovering = hovering
+                }
+            } else {
+                isHovering = hovering
+            }
+        }
     }
 }
 

@@ -1,5 +1,5 @@
 //
-//  PlayAudioView.swift
+//  WindowView.swift
 //  sonus
 //
 //  Created by Alfonso Tarallo on 30/11/24.
@@ -8,9 +8,11 @@
 import SwiftUI
 import UniformTypeIdentifiers
 
-struct PlayAudioView: View {
+struct WindowView: View {
     @EnvironmentObject var audioService: AudioService
     @EnvironmentObject var fileService: FileService
+    @EnvironmentObject var settings: AppSettings
+    
     @Binding var isImporting: Bool
     
     @FocusState var textFieldFocus: Bool
@@ -23,6 +25,7 @@ struct PlayAudioView: View {
     @State var nameToDelete: String = ""
     
     @State var selectedIndex: Int = 0
+    @State var isSelectingWithPointer: Bool = true
     @State private var scrollProxy: ScrollViewProxy? = nil
     
     
@@ -30,33 +33,32 @@ struct PlayAudioView: View {
     var allFileNames: [String] { fileService.fileNames.keys.sorted() }
     var filteredFileNames: [String] {
         if text.isEmpty { return allFileNames }
-//        return allFileNames.filter({ $0.hasPrefix(text) })
+        //        return allFileNames.filter({ $0.hasPrefix(text) })
         return allFileNames.filter({ $0.localizedCaseInsensitiveContains(text) })
     }
     
     var body: some View {
         VStack {
             VStack(spacing: 0) {
-                TextField("Enter text", text: $text)
-                    .focused($textFieldFocus)
-                    .font(.largeTitle)
-                    .textFieldStyle(.plain)
-                    .onChange(of: text) { oldValue, newValue in
-                        selectedIndex = 0
-                        fileService.readFileNames()
-                    }
-                    .padding()
-                
-                Divider()
-                
-                
-                ScrollView {
+                if !settings.isInSettings {
+                    TextField("Enter text", text: $text)
+                        .focused($textFieldFocus)
+                        .font(.largeTitle)
+                        .textFieldStyle(.plain)
+                        .onChange(of: text) { oldValue, newValue in
+                            selectedIndex = 0
+                            fileService.readFileNames()
+                        }
+                        .padding()
+                    
+                    Divider()
+                    
                     ScrollViewReader { proxy in
-                        VStack(spacing: 0) {
+                        List {
                             ForEach(filteredFileNames, id: \.self) { name in
                                 HStack {
                                     if nameToEdit == name {
-                                        TextField("Enter new name", text: $nameEditing)
+                                        TextField("Name this sound", text: $nameEditing)
                                             .textFieldStyle(.plain)
                                             .focused($nameEditFocus)
                                             .onSubmit {
@@ -101,7 +103,7 @@ struct PlayAudioView: View {
                                 }, message: {
                                     Text("You can't undo this action")
                                 })
-                                .padding()
+                                .padding(.vertical)
                                 .font(.title3)
                                 .onHover(perform: { hover in
                                     withAnimation(.smooth(duration: 0.3)) {
@@ -113,9 +115,9 @@ struct PlayAudioView: View {
                                 .background(content: {
                                     if selectedIndex >= 0 && selectedIndex < filteredFileNames.count {
                                         if name == filteredFileNames[selectedIndex] {
-                                            Color.accentColor.opacity(0.2)
+                                            Color.purple.opacity(0.2)
                                                 .clipShape(RoundedRectangle(cornerRadius: 8))
-                                                .padding(4)
+                                                .padding(.horizontal, -12)
                                         }
                                     }
                                 })
@@ -127,21 +129,30 @@ struct PlayAudioView: View {
                             }
                         }
                     }
-                }
-                .shadow(color: Color.black.opacity(0.2), radius: 5, x: 0, y: 2)
-                .scrollIndicators(.never)
-                .onChange(of: selectedIndex) { old, new in
-                    withAnimation(.smooth(duration: 0.3)) {
-                        if new >= 0 && new < filteredFileNames.count && new != old {
-                            scrollProxy?.scrollTo(filteredFileNames[new], anchor: .top)
+                    .shadow(color: Color.black.opacity(0.2), radius: 5, x: 0, y: 2)
+                    .scrollIndicators(.never)
+                    .onChange(of: selectedIndex) { old, new in
+                        withAnimation(.smooth(duration: 0.3)) {
+                            if !isSelectingWithPointer {
+                                if new >= 0 && new < filteredFileNames.count && new != old {
+                                    scrollProxy?.scrollTo(filteredFileNames[new], anchor: .top)
+                                }
+                            }
+                            isSelectingWithPointer = true
                         }
                     }
+                    
+                }
+                
+                if settings.isInSettings {
+                    Spacer()
                 }
                 
                 Divider()
                 
                 HStack {
-                    Image(systemName: "heart.fill")
+                    SettingsButton()
+                        .frame(width: 30, height: 30)
                     
                     Spacer()
                     
@@ -156,51 +167,73 @@ struct PlayAudioView: View {
                 
                 Divider()
             }
-            .frame(minWidth: 700, minHeight: 400)
+            .frame(minWidth: 700, maxWidth: 700, minHeight: 400, maxHeight: 400)
             .clipShape(RoundedRectangle(cornerRadius: 16))
             .background {
                 RoundedRectangle(cornerRadius: 16)
                     .fill(.ultraThickMaterial)
             }
             
-            HStack {
-                Button {
-                    fileService.readFileNames()
-                    if filteredFileNames.isEmpty { return }
-                    audioService.playAudio(from: fileService.fileNames["\(filteredFileNames[selectedIndex])"]!)
-                } label: {
-                    Image(systemName: "play.circle.fill")
-                }
-                .keyboardShortcut(.defaultAction)
-                
-                Button {
-                    withAnimation(.smooth(duration: 0.3)) {
-                        if selectedIndex - 1 < 0 {
-                            selectedIndex = filteredFileNames.count - 1
-                        } else {
-                            selectedIndex -= 1
-                        }
+            if !settings.isInSettings {
+                HStack {
+                    Button {
+                        fileService.readFileNames()
+                        if filteredFileNames.isEmpty { return }
+                        audioService.playAudio(from: fileService.fileNames["\(filteredFileNames[selectedIndex])"]!)
+                    } label: {
+                        Image(systemName: "play.circle.fill")
                     }
-                } label: {
-                    Image(systemName: "arrow.up")
-                }
-                .keyboardShortcut(.upArrow, modifiers: .capsLock)
-                
-                Button {
-                    withAnimation(.smooth(duration: 0.3)) {
-                        if selectedIndex + 1 >= filteredFileNames.count {
-                            selectedIndex = 0
-                        } else {
-                            selectedIndex += 1
-                        }
+                    .keyboardShortcut(.defaultAction)
+                    
+                    Button {
+                        fileService.readFileNames()
+                        if filteredFileNames.isEmpty { return }
+                        audioService.playAudio(from: fileService.fileNames["\(filteredFileNames[selectedIndex])"]!, speed: 2.0)
+                    } label: {
+                        Image(systemName: "play.circle.fill")
                     }
-                } label: {
-                    Image(systemName: "arrow.down")
+                    .keyboardShortcut(.return, modifiers: [.shift])
+                    
+                    Button {
+                        fileService.readFileNames()
+                        if filteredFileNames.isEmpty { return }
+                        audioService.playAudio(from: fileService.fileNames["\(filteredFileNames[selectedIndex])"]!, speed: 0.5)
+                    } label: {
+                        Image(systemName: "play.circle.fill")
+                    }
+                    .keyboardShortcut(.return, modifiers: [.shift, .control])
+                    
+                    Button {
+                        isSelectingWithPointer = false
+                        withAnimation(.smooth(duration: 0.3)) {
+                            if selectedIndex - 1 < 0 {
+                                selectedIndex = filteredFileNames.count - 1
+                            } else {
+                                selectedIndex -= 1
+                            }
+                        }
+                    } label: {
+                        Image(systemName: "arrow.up")
+                    }
+                    .keyboardShortcut(.upArrow, modifiers: .capsLock)
+                    
+                    Button {
+                        isSelectingWithPointer = false
+                        withAnimation(.smooth(duration: 0.3)) {
+                            if selectedIndex + 1 >= filteredFileNames.count {
+                                selectedIndex = 0
+                            } else {
+                                selectedIndex += 1
+                            }
+                        }
+                    } label: {
+                        Image(systemName: "arrow.down")
+                    }
+                    .keyboardShortcut(.downArrow, modifiers: .capsLock)
                 }
-                .keyboardShortcut(.downArrow, modifiers: .capsLock)
+                .frame(width: 0, height: 0)
+                .hidden()
             }
-            .frame(width: 0, height: 0)
-            .hidden()
             
         }
         .onAppear {
@@ -232,5 +265,5 @@ struct PlayAudioView: View {
 }
 
 #Preview {
-    PlayAudioView(isImporting: .constant(true))
+    WindowView(isImporting: .constant(true))
 }

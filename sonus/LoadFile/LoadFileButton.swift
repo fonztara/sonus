@@ -10,6 +10,7 @@ import UniformTypeIdentifiers
 
 struct LoadFileButton: View {
     @EnvironmentObject var fileService: FileService
+    @State var isHovering: Bool = false
     
     @State var file: URL? = nil
     @State var importFile: Bool = false
@@ -26,6 +27,10 @@ struct LoadFileButton: View {
                     RoundedRectangle(cornerRadius: 8)
                         .foregroundStyle(Color.accentColor.opacity(0.2))
                 }
+                if isHovering {
+                    RoundedRectangle(cornerRadius: 8)
+                        .foregroundStyle(.white.opacity(0.3))
+                }
                 Image(systemName: "arrow.down")
                     .resizable()
                     .scaledToFit()
@@ -41,6 +46,15 @@ struct LoadFileButton: View {
                 fileService.saveFiles(from: urls)
             }
         })
+        .onHover { hovering in
+            if hovering {
+                withAnimation(.easeIn(duration: 0.05)) {
+                    isHovering = hovering
+                }
+            } else {
+                isHovering = hovering
+            }
+        }
     }
 }
 

@@ -86,7 +86,7 @@ class AudioService: ObservableObject {
 
 
     
-    func playAudio(from url: URL) {
+    func playAudio(from url: URL, speed: Float = 1.0) {
         do {
             if FileManager.default.fileExists(atPath: url.path) {
             } else {
@@ -97,6 +97,8 @@ class AudioService: ObservableObject {
             player = try AVAudioPlayer(contentsOf: url)
             player?.prepareToPlay()
             player?.volume = 1.0
+            player?.enableRate = true
+            player?.rate = speed
             player?.play()
         } catch {
             print("Error playing audio: \(error.localizedDescription)")
