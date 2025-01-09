@@ -104,4 +104,13 @@ class AudioService: ObservableObject {
             print("Error playing audio: \(error.localizedDescription)")
         }
     }
+    
+    func stopAudio() {
+        if let playing = player?.isPlaying {
+            if playing {
+                player?.stop()
+                player = AVAudioPlayer()
+            }
+        }
+    }
 }

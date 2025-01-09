@@ -25,7 +25,7 @@ struct WindowView: View {
     @State var nameToDelete: String = ""
     
     @State var selectedIndex: Int = 0
-    @State var isSelectingWithPointer: Bool = true
+    @State var isSelectingWithCursor: Bool = true
     @State private var scrollProxy: ScrollViewProxy? = nil
     
     
@@ -133,12 +133,12 @@ struct WindowView: View {
                     .scrollIndicators(.never)
                     .onChange(of: selectedIndex) { old, new in
                         withAnimation(.smooth(duration: 0.3)) {
-                            if !isSelectingWithPointer {
+                            if !isSelectingWithCursor {
                                 if new >= 0 && new < filteredFileNames.count && new != old {
                                     scrollProxy?.scrollTo(filteredFileNames[new], anchor: .top)
                                 }
                             }
-                            isSelectingWithPointer = true
+                            isSelectingWithCursor = true
                         }
                     }
                     
@@ -204,7 +204,14 @@ struct WindowView: View {
                     .keyboardShortcut(.return, modifiers: [.shift, .control])
                     
                     Button {
-                        isSelectingWithPointer = false
+                        audioService.stopAudio()
+                    } label: {
+                        Image(systemName: "stop.fill")
+                    }
+                    .keyboardShortcut(.return, modifiers: .control)
+                    
+                    Button {
+                        isSelectingWithCursor = false
                         withAnimation(.smooth(duration: 0.3)) {
                             if selectedIndex - 1 < 0 {
                                 selectedIndex = filteredFileNames.count - 1
@@ -218,7 +225,7 @@ struct WindowView: View {
                     .keyboardShortcut(.upArrow, modifiers: .capsLock)
                     
                     Button {
-                        isSelectingWithPointer = false
+                        isSelectingWithCursor = false
                         withAnimation(.smooth(duration: 0.3)) {
                             if selectedIndex + 1 >= filteredFileNames.count {
                                 selectedIndex = 0
